@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Syncvault</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#09090b; color:#e4e4e7; font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif; }
+  ::selection { background: rgba(16,185,129,.3); }
+  .app { max-width: 1080px; margin: 0 auto; padding: 32px 24px; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .brand { display:flex; gap:12px; align-items:center; }
+  .logo { width:38px; height:38px; border-radius:12px; background:rgba(16,185,129,.15); display:grid; place-items:center; font-size:20px; }
+  .brand h1 { font-size:18px; margin:0; }
+  .brand p { font-size:12px; color:#71717a; margin:2px 0 0; }
+  .card { background:#18181b; border:1px solid #27272a; border-radius:16px; padding:20px; margin-bottom:16px; }
+  .row { display:flex; align-items:center; gap:12px; }
+  .grow { flex:1; min-width:0; }
+  button { background:#27272a; color:#e4e4e7; border:1px solid #3f3f46; border-radius:10px; padding:9px 14px;
+           font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  button:hover { border-color:#52525b; }
+  button.primary { background:#059669; border-color:#059669; color:#fff; }
+  button.primary:hover { background:#10b981; }
+  button.danger { color:#f87171; }
+  button:disabled { opacity:.4; cursor:default; }
+  input, select { background:#09090b; color:#e4e4e7; border:1px solid #27272a; border-radius:10px; padding:9px 12px;
+                  font-size:13px; font-family:inherit; outline:none; }
+  input:focus, select:focus { border-color:#059669; }
+  .muted { color:#71717a; font-size:12px; }
+  .pill { padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .pill.ok { background:rgba(16,185,129,.15); color:#34d399; }
+  .pill.dim { background:#27272a; color:#a1a1aa; }
+  h2 { font-size:14px; margin:0 0 12px; color:#a1a1aa; text-transform:uppercase; letter-spacing:.06em; }
+  .tabs { display:flex; gap:8px; margin-bottom:20px; }
+  .tabs button.active { background:rgba(16,185,129,.15); border-color:transparent; color:#34d399; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { padding:8px 10px; text-align:left; border-bottom:1px solid rgba(39,39,42,.6); }
+  th { color:#71717a; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .lock { max-width:380px; margin:15vh auto; }
+  .lock input { width:100%; margin-bottom:12px; }
+  .lock button { width:100%; }
+  .err { color:#f87171; font-size:13px; margin-top:8px; }
+  .log { font-family:ui-monospace, monospace; font-size:11px; color:#71717a; max-height:120px; overflow-y:auto;
+         background:#09090b; border-radius:10px; padding:10px; margin-top:12px; }
+  .hidden { display:none; }
+  dialog { background:#18181b; color:#e4e4e7; border:1px solid #27272a; border-radius:16px; padding:24px; min-width:420px; }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+  dialog label { display:block; font-size:12px; color:#a1a1aa; margin:10px 0 4px; }
+  dialog input, dialog select { width:100%; }
+  .dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">🔐</div>
+      <div>
+        <h1>Syncvault</h1>
+        <p>Encrypted backups to storage you own. Pay once.</p>
+      </div>
+    </div>
+    <div class="row">
+      <span id="lockState" class="pill dim">locked</span>
+      <button id="btnLock" class="hidden">Lock</button>
+    </div>
+  </header>
+
+  <!-- lock screen -->
+  <div id="lockScreen" class="card lock">
+    <h2 id="lockTitle">Unlock your vault</h2>
+    <p class="muted" id="lockHint">Your passphrase encrypts every backup with AES-256-GCM. It never leaves this machine — if you lose it, backups are unrecoverable by design.</p>
+    <br>
+    <input id="ppInput" type="password" placeholder="Passphrase">
+    <button id="btnUnlock" class="primary">Unlock</button>
+    <div class="err" id="lockErr"></div>
+  </div>
+
+  <!-- main UI -->
+  <div id="main" class="hidden">
+    <div class="tabs">
+      <button data-tab="folders" class="active">Folders</button>
+      <button data-tab="destinations">Destinations</button>
+      <button data-tab="restore">Browse &amp; restore</button>
+      <button data-tab="settings">Settings</button>
+    </div>
+
+    <div id="tab-folders">
+      <div class="card">
+        <div class="row">
+          <div class="grow"><h2 style="margin:0">Watched folders</h2></div>
+          <button id="btnAddFolder" class="primary">+ Watch a folder</button>
+        </div>
+        <table id="folderTable"><thead>
+          <tr><th>Path</th><th>Destination</th><th>Schedule</th><th>Files</th><th>Last backup</th><th></th></tr>
+        </thead><tbody></tbody></table>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+
+    <div id="tab-destinations" class="hidden">
+      <div class="card">
+        <div class="row">
+          <div class="grow"><h2 style="margin:0">Destinations</h2></div>
+          <button id="btnAddDest" class="primary">+ Add destination</button>
+        </div>
+        <table id="destTable"><thead>
+          <tr><th>Name</th><th>Type</th><th>Detail</th><th></th></tr>
+        </thead><tbody></tbody></table>
+        <p class="muted">BYO storage: AWS S3, Backblaze B2, Wasabi, Cloudflare R2, MinIO — or a plain local/network folder. You pay your storage provider for bytes, not us for software rent.</p>
+      </div>
+    </div>
+
+    <div id="tab-restore" class="hidden">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <select id="restoreFolderSel" class="grow"></select>
+          <input id="asOf" type="datetime-local" title="Browse as of">
+          <button id="btnRestoreAll" class="primary">Restore all…</button>
+        </div>
+        <table id="treeTable"><thead>
+          <tr><th>File</th><th>Size</th><th>Version</th><th>Backed up</th><th></th></tr>
+        </thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div id="tab-settings" class="hidden">
+      <div class="card">
+        <h2>Versioning</h2>
+        <div class="row">
+          <label class="muted">Keep last</label>
+          <input id="keepVersions" type="number" min="1" max="100" style="width:80px">
+          <label class="muted">versions of each file</label>
+          <button id="btnSaveSettings" class="primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- add folder dialog -->
+<dialog id="dlgFolder">
+  <h2>Watch a folder</h2>
+  <label>Folder</label>
+  <div class="row"><input id="dlgFolderPath" readonly class="grow"><button id="dlgPick">Browse…</button></div>
+  <label>Destination</label>
+  <select id="dlgFolderDest"></select>
+  <label>Schedule</label>
+  <select id="dlgFolderSchedule">
+    <option value="manual">Manual (back up when I click)</option>
+    <option value="continuous">Continuous (every 5 min)</option>
+    <option value="hourly">Hourly</option>
+    <option value="daily">Daily</option>
+  </select>
+  <div class="dialog-actions"><button id="dlgFolderCancel">Cancel</button><button id="dlgFolderSave" class="primary">Add</button></div>
+</dialog>
+
+<!-- add destination dialog -->
+<dialog id="dlgDest">
+  <h2>Add destination</h2>
+  <label>Name</label><input id="dDestName" placeholder="My B2 bucket">
+  <label>Type</label>
+  <select id="dDestType"><option value="local">Local / network folder</option><option value="s3">S3-compatible</option></select>
+  <div id="dLocalFields"><label>Folder path</label><input id="dLocalPath" placeholder="D:\Backups or \\nas\backups"></div>
+  <div id="dS3Fields" class="hidden">
+    <label>Endpoint (empty for AWS)</label><input id="dS3Endpoint" placeholder="https://s3.us-west-002.backblazeb2.com">
+    <label>Region</label><input id="dS3Region" placeholder="us-east-1">
+    <label>Bucket</label><input id="dS3Bucket">
+    <label>Key prefix (optional)</label><input id="dS3Prefix" placeholder="syncvault">
+    <label>Access key ID</label><input id="dS3Key">
+    <label>Secret access key</label><input id="dS3Secret" type="password">
+  </div>
+  <div class="dialog-actions"><button id="dDestCancel">Cancel</button><button id="dDestSave" class="primary">Add</button></div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

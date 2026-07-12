@@ -57,7 +57,7 @@ A 100 GB backup: **$29 once + ~$7/yr storage** vs $108/yr (Backblaze) — the so
 
 ## ☕ Skip the setup — get the 1-click installer
 
-Grab the packaged Windows installer at **[whop.com/onetime-suite](https://whop.com/onetime-suite)**. Pay once. Own it forever. No subscription.
+Grab the packaged Windows installer at **[whop.com/onetime-suite](https://whop.com/benjisaiempire/syncvault-app)**. Pay once. Own it forever. No subscription.
 
 ## Tech stack
 

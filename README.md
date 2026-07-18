@@ -1,5 +1,9 @@
 # 🔐 Syncvault
 
+## Demo
+
+VIDEO-PLACEHOLDER
+
 **Encrypted backups to storage you own. Pay once — no Backblaze subscription.**
 
 ![MIT License](https://img.shields.io/badge/license-MIT-green) ![Electron](https://img.shields.io/badge/desktop-Electron-blue)

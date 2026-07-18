@@ -2,7 +2,11 @@
 
 ## Demo
 
-VIDEO-PLACEHOLDER
+
+
+https://github.com/user-attachments/assets/7730e3c5-b542-4b07-8111-a0ebea8bbde3
+
+
 
 **Encrypted backups to storage you own. Pay once — no Backblaze subscription.**
 

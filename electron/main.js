@@ -8,7 +8,6 @@ const { runBackup } = require('../lib/backup');
 const { treeAsOf, versionsOf, restoreVersion, restoreFolder } = require('../lib/restore');
 const { startScheduler, computeNextRun } = require('../lib/scheduler');
 const { createAdapter } = require('../lib/destinations');
-const { gateLicense, registerLicenseIpc } = require('./license-gate');
 
 let win = null;
 let db = null;
@@ -41,9 +40,6 @@ async function backupFolder(folder) {
 }
 
 app.whenReady().then(async () => {
-  if (!(await gateLicense())) return; // quit already requested
-  registerLicenseIpc();
-
   db = openDb(path.join(app.getPath('userData'), 'data', 'syncvault.db'));
 
   stopScheduler = startScheduler(db, (folder) => {

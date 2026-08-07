@@ -36,6 +36,12 @@ jobs:
           # only enable npm cache when a lockfile exists (setup-node errors otherwise)
           cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
 
+      # node-gyp 9 (pulled in by better-sqlite3) needs distutils, which was
+      # removed in Python 3.12; macos-latest ships Python 3.14 via Homebrew.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Install dependencies
         shell: bash
         run: |
